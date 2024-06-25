@@ -9,14 +9,10 @@ translation:
 integer type incompatibility:
 	in owi's implementation long has the same range as int, which is not the case for E-ACSL's default architecture dependency
 	use option -machdep gcc_x86_32 helps
-	also, owi support for GMP library
+	also, owi does not support GMP library
 
 main function:
 	add __e_acsl_memory_init and __e_acsl_memory_clean surrondings
-
-Precondition
-Function call
-Postcondition
 
 assert:
 	generate __e_acsl_assert_data_t by __e_acsl_assert_register_*

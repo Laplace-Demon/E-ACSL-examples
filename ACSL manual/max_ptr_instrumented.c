@@ -181,16 +181,6 @@ extern size_t __e_acsl_heap_allocated_blocks;
     assigns data->values;
     assigns data->values \from (indirect: __fc_heap_status), value;
  */
- __attribute__((__FC_BUILTIN__)) void __e_acsl_assert_register_long(__e_acsl_assert_data_t *data,
-                                                                    char const *name,
-                                                                    int is_enum,
-                                                                    long value);
-
-/*@ requires \valid(data);
-    requires data->values ≡ \null ∨ \valid(data->values);
-    assigns data->values;
-    assigns data->values \from (indirect: __fc_heap_status), value;
- */
  __attribute__((__FC_BUILTIN__)) void __e_acsl_assert_register_ulong(
                                                                     __e_acsl_assert_data_t *data,
                                                                     char const *name,
@@ -241,6 +231,9 @@ axiomatic dynamic_allocation {
 /*@ assigns \nothing; */
  __attribute__((__FC_BUILTIN__)) void __e_acsl_initialize(void *ptr,
                                                           size_t size);
+
+/*@ assigns \nothing; */
+ __attribute__((__FC_BUILTIN__)) void __e_acsl_full_init(void *ptr);
 
 /*@ assigns \result;
     assigns \result \from *((char *)ptr + (0 .. size - 1)), ptr, size;
@@ -329,143 +322,180 @@ __inline static long valid_wstring__fc_inline(wchar_t *s, int wrtbl)
 
 extern  __attribute__((__FC_BUILTIN__)) int __e_acsl_sound_verdict;
 
+typedef unsigned long size_t;
 int owi_i32(void) __attribute__((__import_name__("i32_symbol"),
                                  __import_module__("symbolic")));
 
-void owi_assume(int c) __attribute__((__import_name__("assume"),
-                                      __import_module__("symbolic")));
-
-extern int ( /* missing proto */ memset)(int *x_0, int x_1, unsigned long x_2);
-
-/*@ requires \valid(array + (0 .. size - 1));
-    ensures ∀ ℤ i; 0 ≤ i < \old(size) ⇒ *(\old(array) + i) ≡ 0;
+/*@ assigns __e_acsl_heap_allocation_size, __e_acsl_heap_allocated_blocks;
+    assigns __e_acsl_heap_allocation_size
+      \from (indirect: size), __e_acsl_heap_allocation_size;
+    assigns __e_acsl_heap_allocated_blocks
+      \from (indirect: size), __e_acsl_heap_allocated_blocks;
+    
+    behavior allocation:
+      assumes can_allocate: is_allocable(size);
+      assigns __e_acsl_heap_allocation_size, __e_acsl_heap_allocated_blocks;
+      assigns __e_acsl_heap_allocation_size
+        \from (indirect: size), __e_acsl_heap_allocation_size;
+      assigns __e_acsl_heap_allocated_blocks
+        \from (indirect: size), __e_acsl_heap_allocated_blocks;
+    
+    behavior no_allocation:
+      assumes cannot_allocate: ¬is_allocable(size);
+      assigns __e_acsl_heap_allocation_size, __e_acsl_heap_allocated_blocks;
+      assigns __e_acsl_heap_allocation_size
+        \from (indirect: size), __e_acsl_heap_allocation_size;
+      assigns __e_acsl_heap_allocated_blocks
+        \from size, __e_acsl_heap_allocated_blocks;
  */
-void __gen_e_acsl_zero_array(int *array, int size);
+void *malloc(size_t);
 
-void zero_array(int *array, int size)
+/*@ requires \valid(p) ∧ \valid(q);
+    ensures *\old(p) < *\old(q); */
+void __gen_e_acsl_max_ptr(int *p, int *q);
+
+void max_ptr(int *p, int *q)
 {
-  __e_acsl_store_block((void *)(& array),8UL);
-  memset(array,0,(unsigned long)(size - 1) * sizeof(int));
-  __e_acsl_initialize((void *)array,(unsigned long)(size - 1) * sizeof(int));
-  __e_acsl_delete_block((void *)(& array));
+  __e_acsl_store_block((void *)(& q),8UL);
+  __e_acsl_store_block((void *)(& p),8UL);
+  if (*p > *q) {
+    int tmp = *p;
+    __e_acsl_initialize((void *)p,sizeof(int));
+    *p = *q;
+    __e_acsl_initialize((void *)q,sizeof(int));
+    *q = tmp;
+  }
+  __e_acsl_delete_block((void *)(& q));
+  __e_acsl_delete_block((void *)(& p));
   return;
 }
 
 int main(void)
 {
   int __retres;
-  int numbers[10];
+  int *p;
+  int *q;
   __e_acsl_memory_init((int *)0,(char ***)0,8UL);
-  __e_acsl_store_block((void *)(numbers),40UL);
-  int size = owi_i32();
-  owi_assume(size > 0);
-  owi_assume(size <= 10);
-  __gen_e_acsl_zero_array(numbers,size);
+  __e_acsl_store_block((void *)(& q),8UL);
+  __e_acsl_store_block((void *)(& p),8UL);
+  __e_acsl_full_init((void *)(& p));
+  p = (int *)malloc(sizeof(int));
+  __e_acsl_full_init((void *)(& q));
+  q = (int *)malloc(sizeof(int));
+  __e_acsl_initialize((void *)p,sizeof(int));
+  *p = owi_i32();
+  __e_acsl_initialize((void *)q,sizeof(int));
+  *q = owi_i32();
+  __gen_e_acsl_max_ptr(p,q);
   __retres = 0;
-  __e_acsl_delete_block((void *)(numbers));
+  __e_acsl_delete_block((void *)(& q));
+  __e_acsl_delete_block((void *)(& p));
   __e_acsl_memory_clean();
   return __retres;
 }
 
-/*@ requires \valid(array + (0 .. size - 1));
-    ensures ∀ ℤ i; 0 ≤ i < \old(size) ⇒ *(\old(array) + i) ≡ 0;
- */
-void __gen_e_acsl_zero_array(int *array, int size)
+/*@ requires \valid(p) ∧ \valid(q);
+    ensures *\old(p) < *\old(q); */
+void __gen_e_acsl_max_ptr(int *p, int *q)
 {
-  int __gen_e_acsl_at_2;
+  int *__gen_e_acsl_at_2;
   int *__gen_e_acsl_at;
   {
-    long __gen_e_acsl_size;
-    long __gen_e_acsl_if;
     int __gen_e_acsl_valid;
-    __e_acsl_store_block((void *)(& array),8UL);
-    __gen_e_acsl_at = array;
-    __gen_e_acsl_at_2 = size;
+    int __gen_e_acsl_and;
+    __e_acsl_store_block((void *)(& q),8UL);
+    __e_acsl_store_block((void *)(& p),8UL);
+    __gen_e_acsl_at = p;
+    __gen_e_acsl_at_2 = q;
     __e_acsl_assert_data_t __gen_e_acsl_assert_data = {.values = (void *)0};
-    __gen_e_acsl_size = 4L * (((size - 1L) - 0L) + 1L);
-    if (__gen_e_acsl_size <= 0L) __gen_e_acsl_if = 0L;
-    else __gen_e_acsl_if = __gen_e_acsl_size;
-    __gen_e_acsl_valid = __e_acsl_valid((void *)((char *)array + 4 * 0),
-                                        (size_t)__gen_e_acsl_if,
-                                        (void *)array,(void *)(& array));
-    __e_acsl_assert_register_ptr(& __gen_e_acsl_assert_data,"array",
-                                 (void *)array);
-    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,"sizeof(int)",0,
-                                 4);
-    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,"sizeof(int)",0,
-                                 4);
-    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,"size",0,size);
-    __e_acsl_assert_register_long(& __gen_e_acsl_assert_data,"size",0,
-                                  __gen_e_acsl_size);
-    __e_acsl_assert_register_long(& __gen_e_acsl_assert_data,"size",0,
-                                  __gen_e_acsl_size);
-    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,
-                                 "\\valid(array + (0 .. size - 1))",0,
+    __gen_e_acsl_valid = __e_acsl_valid((void *)p,sizeof(int),(void *)p,
+                                        (void *)(& p));
+    __e_acsl_assert_register_ptr(& __gen_e_acsl_assert_data,"p",(void *)p);
+    __e_acsl_assert_register_ulong(& __gen_e_acsl_assert_data,"sizeof(int)",
+                                   0,sizeof(int));
+    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,"\\valid(p)",0,
                                  __gen_e_acsl_valid);
+    if (__gen_e_acsl_valid) {
+      int __gen_e_acsl_valid_2;
+      __gen_e_acsl_valid_2 = __e_acsl_valid((void *)q,sizeof(int),(void *)q,
+                                            (void *)(& q));
+      __e_acsl_assert_register_ptr(& __gen_e_acsl_assert_data,"q",(void *)q);
+      __e_acsl_assert_register_ulong(& __gen_e_acsl_assert_data,
+                                     "sizeof(int)",0,sizeof(int));
+      __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,"\\valid(q)",0,
+                                   __gen_e_acsl_valid_2);
+      __gen_e_acsl_and = __gen_e_acsl_valid_2;
+    }
+    else __gen_e_acsl_and = 0;
     __gen_e_acsl_assert_data.blocking = 1;
     __gen_e_acsl_assert_data.kind = "Precondition";
-    __gen_e_acsl_assert_data.pred_txt = "\\valid(array + (0 .. size - 1))";
-    __gen_e_acsl_assert_data.file = "annotated2.c";
-    __gen_e_acsl_assert_data.fct = "zero_array";
-    __gen_e_acsl_assert_data.line = 3;
-    __e_acsl_assert(__gen_e_acsl_valid,& __gen_e_acsl_assert_data);
+    __gen_e_acsl_assert_data.pred_txt = "\\valid(p) \342\210\247 \\valid(q)";
+    __gen_e_acsl_assert_data.file = "E-ACSL-examples/ACSL manual/max_ptr.c";
+    __gen_e_acsl_assert_data.fct = "max_ptr";
+    __gen_e_acsl_assert_data.line = 4;
+    __e_acsl_assert(__gen_e_acsl_and,& __gen_e_acsl_assert_data);
     __e_acsl_assert_clean(& __gen_e_acsl_assert_data);
   }
-  zero_array(array,size);
+  max_ptr(p,q);
   {
-    int __gen_e_acsl_forall;
-    int __gen_e_acsl_i;
+    int __gen_e_acsl_valid_read;
+    int __gen_e_acsl_valid_read_2;
     __e_acsl_assert_data_t __gen_e_acsl_assert_data_2 =
       {.values = (void *)0};
-    __gen_e_acsl_forall = 1;
-    __gen_e_acsl_i = 0;
-    while (1) {
-      if (__gen_e_acsl_i < __gen_e_acsl_at_2) ; else break;
-      {
-        int __gen_e_acsl_valid_read;
-        __e_acsl_assert_data_t __gen_e_acsl_assert_data_3 =
-          {.values = (void *)0};
-        __gen_e_acsl_valid_read = __e_acsl_valid_read((void *)(__gen_e_acsl_at + __gen_e_acsl_i),
-                                                      sizeof(int),
-                                                      (void *)__gen_e_acsl_at,
-                                                      (void *)(& __gen_e_acsl_at));
-        __e_acsl_assert_register_ptr(& __gen_e_acsl_assert_data_3,
-                                     "__gen_e_acsl_at",
-                                     (void *)__gen_e_acsl_at);
-        __e_acsl_assert_register_int(& __gen_e_acsl_assert_data_3,
-                                     "__gen_e_acsl_i",0,__gen_e_acsl_i);
-        __e_acsl_assert_register_ulong(& __gen_e_acsl_assert_data_3,
-                                       "sizeof(int)",0,sizeof(int));
-        __gen_e_acsl_assert_data_3.blocking = 1;
-        __gen_e_acsl_assert_data_3.kind = "RTE";
-        __gen_e_acsl_assert_data_3.pred_txt = "\\valid_read(__gen_e_acsl_at + __gen_e_acsl_i)";
-        __gen_e_acsl_assert_data_3.file = "annotated2.c";
-        __gen_e_acsl_assert_data_3.fct = "zero_array";
-        __gen_e_acsl_assert_data_3.line = 4;
-        __gen_e_acsl_assert_data_3.name = "mem_access";
-        __e_acsl_assert(__gen_e_acsl_valid_read,& __gen_e_acsl_assert_data_3);
-        __e_acsl_assert_clean(& __gen_e_acsl_assert_data_3);
-        if (*(__gen_e_acsl_at + __gen_e_acsl_i) == 0) ;
-        else {
-          __gen_e_acsl_forall = 0;
-          goto e_acsl_end_loop1;
-        }
-      }
-      __gen_e_acsl_i ++;
-    }
-    e_acsl_end_loop1: ;
-    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data_2,
-                                 "\342\210\200 \342\204\244 i; 0 \342\211\244 i < \\old(size) \342\207\222 *(\\old(array) + i) \342\211\241 0",
-                                 0,__gen_e_acsl_forall);
+    __e_acsl_assert_data_t __gen_e_acsl_assert_data_3 =
+      {.values = (void *)0};
+    __gen_e_acsl_valid_read = __e_acsl_valid_read((void *)__gen_e_acsl_at_2,
+                                                  sizeof(int),
+                                                  (void *)__gen_e_acsl_at_2,
+                                                  (void *)(& __gen_e_acsl_at_2));
+    __e_acsl_assert_register_ptr(& __gen_e_acsl_assert_data_3,
+                                 "__gen_e_acsl_at_2",
+                                 (void *)__gen_e_acsl_at_2);
+    __e_acsl_assert_register_ulong(& __gen_e_acsl_assert_data_3,
+                                   "sizeof(int)",0,sizeof(int));
+    __gen_e_acsl_assert_data_3.blocking = 1;
+    __gen_e_acsl_assert_data_3.kind = "RTE";
+    __gen_e_acsl_assert_data_3.pred_txt = "\\valid_read(__gen_e_acsl_at_2)";
+    __gen_e_acsl_assert_data_3.file = "E-ACSL-examples/ACSL manual/max_ptr.c";
+    __gen_e_acsl_assert_data_3.fct = "max_ptr";
+    __gen_e_acsl_assert_data_3.line = 5;
+    __gen_e_acsl_assert_data_3.name = "mem_access";
+    __e_acsl_assert(__gen_e_acsl_valid_read,& __gen_e_acsl_assert_data_3);
+    __e_acsl_assert_clean(& __gen_e_acsl_assert_data_3);
+    __e_acsl_assert_data_t __gen_e_acsl_assert_data_4 =
+      {.values = (void *)0};
+    __gen_e_acsl_valid_read_2 = __e_acsl_valid_read((void *)__gen_e_acsl_at,
+                                                    sizeof(int),
+                                                    (void *)__gen_e_acsl_at,
+                                                    (void *)(& __gen_e_acsl_at));
+    __e_acsl_assert_register_ptr(& __gen_e_acsl_assert_data_4,
+                                 "__gen_e_acsl_at",(void *)__gen_e_acsl_at);
+    __e_acsl_assert_register_ulong(& __gen_e_acsl_assert_data_4,
+                                   "sizeof(int)",0,sizeof(int));
+    __gen_e_acsl_assert_data_4.blocking = 1;
+    __gen_e_acsl_assert_data_4.kind = "RTE";
+    __gen_e_acsl_assert_data_4.pred_txt = "\\valid_read(__gen_e_acsl_at)";
+    __gen_e_acsl_assert_data_4.file = "E-ACSL-examples/ACSL manual/max_ptr.c";
+    __gen_e_acsl_assert_data_4.fct = "max_ptr";
+    __gen_e_acsl_assert_data_4.line = 5;
+    __gen_e_acsl_assert_data_4.name = "mem_access";
+    __e_acsl_assert(__gen_e_acsl_valid_read_2,& __gen_e_acsl_assert_data_4);
+    __e_acsl_assert_clean(& __gen_e_acsl_assert_data_4);
+    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data_2,"*\\old(p)",0,
+                                 *__gen_e_acsl_at);
+    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data_2,"*\\old(q)",0,
+                                 *__gen_e_acsl_at_2);
     __gen_e_acsl_assert_data_2.blocking = 1;
     __gen_e_acsl_assert_data_2.kind = "Postcondition";
-    __gen_e_acsl_assert_data_2.pred_txt = "\342\210\200 \342\204\244 i; 0 \342\211\244 i < \\old(size) \342\207\222 *(\\old(array) + i) \342\211\241 0";
-    __gen_e_acsl_assert_data_2.file = "annotated2.c";
-    __gen_e_acsl_assert_data_2.fct = "zero_array";
-    __gen_e_acsl_assert_data_2.line = 4;
-    __e_acsl_assert(__gen_e_acsl_forall,& __gen_e_acsl_assert_data_2);
+    __gen_e_acsl_assert_data_2.pred_txt = "*\\old(p) < *\\old(q)";
+    __gen_e_acsl_assert_data_2.file = "E-ACSL-examples/ACSL manual/max_ptr.c";
+    __gen_e_acsl_assert_data_2.fct = "max_ptr";
+    __gen_e_acsl_assert_data_2.line = 5;
+    __e_acsl_assert(*__gen_e_acsl_at < *__gen_e_acsl_at_2,
+                    & __gen_e_acsl_assert_data_2);
     __e_acsl_assert_clean(& __gen_e_acsl_assert_data_2);
-    __e_acsl_delete_block((void *)(& array));
+    __e_acsl_delete_block((void *)(& q));
+    __e_acsl_delete_block((void *)(& p));
     return;
   }
 }

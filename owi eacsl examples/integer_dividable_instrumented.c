@@ -177,28 +177,34 @@ extern size_t __e_acsl_heap_allocated_blocks;
                                                                    int value);
 
 /*@ requires \valid(data);
-    requires data->values ≡ \null ∨ \valid(data->values);
-    assigns data->values;
-    assigns data->values \from (indirect: __fc_heap_status), value;
- */
- __attribute__((__FC_BUILTIN__)) void __e_acsl_assert_register_ulong(
-                                                                    __e_acsl_assert_data_t *data,
-                                                                    char const *name,
-                                                                    int is_enum,
-                                                                    unsigned long value);
-
-/*@ requires \valid(data);
-    requires data->values ≡ \null ∨ \valid(data->values);
-    assigns data->values;
-    assigns data->values \from (indirect: __fc_heap_status), ptr;
- */
- __attribute__((__FC_BUILTIN__)) void __e_acsl_assert_register_ptr(__e_acsl_assert_data_t *data,
-                                                                   char const *name,
-                                                                   void *ptr);
-
-/*@ requires \valid(data);
     assigns \nothing; */
  __attribute__((__FC_BUILTIN__)) void __e_acsl_assert_clean(__e_acsl_assert_data_t *data);
+
+/*@ admit ensures \valid(\result);
+    assigns \result;
+    assigns \result \from (indirect: __fc_heap_status), (indirect: size);
+ */
+ __attribute__((__FC_BUILTIN__)) __e_acsl_contract_t *__e_acsl_contract_init
+(size_t size);
+
+/*@ requires \valid(c);
+    assigns \nothing; */
+ __attribute__((__FC_BUILTIN__)) void __e_acsl_contract_clean(__e_acsl_contract_t *c);
+
+/*@ requires \valid(c);
+    assigns *c;
+    assigns *c \from (indirect: c), (indirect: i), assumes;
+ */
+ __attribute__((__FC_BUILTIN__)) void __e_acsl_contract_set_behavior_assumes
+(__e_acsl_contract_t *c, size_t i, int assumes);
+
+/*@ requires \valid_read(c);
+    ensures \result ≡ 0 ∨ \result ≡ 1;
+    assigns \result;
+    assigns \result \from (indirect: c), (indirect: i);
+ */
+ __attribute__((__FC_BUILTIN__)) int __e_acsl_contract_get_behavior_assumes
+(__e_acsl_contract_t const *c, size_t i);
 
 /*@
 axiomatic dynamic_allocation {
@@ -217,69 +223,6 @@ axiomatic dynamic_allocation {
 
 /*@ assigns \nothing; */
  __attribute__((__FC_BUILTIN__)) void __e_acsl_memory_clean(void);
-
-/*@ ensures \result ≡ \old(ptr);
-    assigns \result;
-    assigns \result \from *((char *)ptr + (0 .. size - 1)), ptr, size;
- */
- __attribute__((__FC_BUILTIN__)) void *__e_acsl_store_block(void *ptr,
-                                                            size_t size);
-
-/*@ assigns \nothing; */
- __attribute__((__FC_BUILTIN__)) void __e_acsl_delete_block(void *ptr);
-
-/*@ assigns \nothing; */
- __attribute__((__FC_BUILTIN__)) void __e_acsl_full_init(void *ptr);
-
-/*@ assigns \result;
-    assigns \result \from *((char *)ptr + (0 .. size - 1)), ptr, size;
-    
-    behavior valid:
-      assumes \valid((char *)ptr + (0 .. size - 1));
-      assumes
-        size ≤ 0 ∨
-        ¬\separated(
-            (char *)ptr + (0 .. size - 1),
-            (char *)\base_addr(base) + (0 .. \block_length(base) - 1)
-            );
-      ensures \result ≡ 1;
-    
-    behavior invalid_ptr:
-      assumes ¬\valid((char *)ptr + (0 .. size - 1));
-      ensures \result ≡ 0;
-    
-    behavior separated_ptr:
-      assumes size > 0;
-      assumes
-        \separated(
-          (char *)ptr + (0 .. size - 1),
-          (char *)\base_addr(base) + (0 .. \block_length(base) - 1)
-          );
-      ensures \result ≡ 0;
-    
-    complete behaviors separated_ptr, invalid_ptr, valid;
-    disjoint behaviors separated_ptr, invalid_ptr, valid;
- */
- __attribute__((__FC_BUILTIN__)) int __e_acsl_valid(void *ptr, size_t size,
-                                                    void *base,
-                                                    void *addrof_base);
-
-/*@ assigns \result;
-    assigns \result \from *((char *)ptr + (0 .. size - 1)), ptr, size;
-    
-    behavior initialized:
-      assumes \initialized((char *)ptr + (0 .. size - 1));
-      ensures \result ≡ 1;
-    
-    behavior uninitialized:
-      assumes ¬\initialized((char *)ptr + (0 .. size - 1));
-      ensures \result ≡ 0;
-    
-    complete behaviors uninitialized, initialized;
-    disjoint behaviors uninitialized, initialized;
- */
- __attribute__((__FC_BUILTIN__)) int __e_acsl_initialized(void *ptr,
-                                                          size_t size);
 
 long valid_nstring(char *s, long n, int wrtbl);
 
@@ -301,82 +244,139 @@ __inline static long valid_wstring__fc_inline(wchar_t *s, int wrtbl)
 
 extern  __attribute__((__FC_BUILTIN__)) int __e_acsl_sound_verdict;
 
-/*@ assigns __e_acsl_heap_allocation_size, __e_acsl_heap_allocated_blocks;
-    assigns __e_acsl_heap_allocation_size
-      \from (indirect: size), __e_acsl_heap_allocation_size;
-    assigns __e_acsl_heap_allocated_blocks
-      \from (indirect: size), __e_acsl_heap_allocated_blocks;
+int owi_i32(void) __attribute__((__import_name__("i32_symbol"),
+                                 __import_module__("symbolic")));
+
+void owi_assume(int c) __attribute__((__import_name__("assume"),
+                                      __import_module__("symbolic")));
+
+/*@ requires y ≢ 0;
     
-    behavior allocation:
-      assumes can_allocate: is_allocable(size);
-      assigns __e_acsl_heap_allocation_size, __e_acsl_heap_allocated_blocks;
-      assigns __e_acsl_heap_allocation_size
-        \from (indirect: size), __e_acsl_heap_allocation_size;
-      assigns __e_acsl_heap_allocated_blocks
-        \from (indirect: size), __e_acsl_heap_allocated_blocks;
+    behavior yes:
+      assumes x % y ≡ 0;
+      ensures \result ≡ 1;
     
-    behavior no_allocation:
-      assumes cannot_allocate: ¬is_allocable(size);
-      assigns __e_acsl_heap_allocation_size, __e_acsl_heap_allocated_blocks;
-      assigns __e_acsl_heap_allocation_size
-        \from (indirect: size), __e_acsl_heap_allocation_size;
-      assigns __e_acsl_heap_allocated_blocks
-        \from size, __e_acsl_heap_allocated_blocks;
+    behavior no:
+      assumes x % y ≢ 0;
+      ensures \result ≡ 1;
  */
-extern int ( /* missing proto */ malloc)(unsigned long x_0);
+int __gen_e_acsl_is_dividable(int x, int y);
+
+int is_dividable(int x, int y)
+{
+  int __retres;
+  __retres = x % y == 0;
+  return __retres;
+}
 
 int main(void)
 {
   int __retres;
-  int *x;
-  int tmp;
   __e_acsl_memory_init((int *)0,(char ***)0,8UL);
-  __e_acsl_store_block((void *)(& tmp),4UL);
-  __e_acsl_store_block((void *)(& x),8UL);
-  __e_acsl_full_init((void *)(& tmp));
-  tmp = malloc(sizeof(int));
-  __e_acsl_full_init((void *)(& x));
-  x = (int *)tmp;
-  {
-    int __gen_e_acsl_initialized;
-    int __gen_e_acsl_and;
-    __e_acsl_assert_data_t __gen_e_acsl_assert_data = {.values = (void *)0};
-    __gen_e_acsl_initialized = __e_acsl_initialized((void *)(& x),
-                                                    sizeof(int *));
-    __e_acsl_assert_register_ptr(& __gen_e_acsl_assert_data,"&x",
-                                 (void *)(& x));
-    __e_acsl_assert_register_ulong(& __gen_e_acsl_assert_data,
-                                   "sizeof(int *)",0,sizeof(int *));
-    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,
-                                 "\\initialized(&x)",0,
-                                 __gen_e_acsl_initialized);
-    if (__gen_e_acsl_initialized) {
-      int __gen_e_acsl_valid;
-      __gen_e_acsl_valid = __e_acsl_valid((void *)x,sizeof(int),(void *)x,
-                                          (void *)(& x));
-      __e_acsl_assert_register_ptr(& __gen_e_acsl_assert_data,"x",(void *)x);
-      __e_acsl_assert_register_ulong(& __gen_e_acsl_assert_data,
-                                     "sizeof(int)",0,sizeof(int));
-      __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,"\\valid(x)",0,
-                                   __gen_e_acsl_valid);
-      __gen_e_acsl_and = __gen_e_acsl_valid;
-    }
-    else __gen_e_acsl_and = 0;
-    __gen_e_acsl_assert_data.blocking = 1;
-    __gen_e_acsl_assert_data.kind = "Assertion";
-    __gen_e_acsl_assert_data.pred_txt = "\\valid(x)";
-    __gen_e_acsl_assert_data.file = "malloc_valid.c";
-    __gen_e_acsl_assert_data.fct = "main";
-    __gen_e_acsl_assert_data.line = 5;
-    __e_acsl_assert(__gen_e_acsl_and,& __gen_e_acsl_assert_data);
-    __e_acsl_assert_clean(& __gen_e_acsl_assert_data);
-  }
-  /*@ assert \valid(x); */ ;
+  int numerator = owi_i32();
+  int denominator = owi_i32();
+  owi_assume(denominator != 0);
+  __gen_e_acsl_is_dividable(numerator,denominator);
   __retres = 0;
-  __e_acsl_delete_block((void *)(& tmp));
-  __e_acsl_delete_block((void *)(& x));
   __e_acsl_memory_clean();
   return __retres;
+}
+
+/*@ requires y ≢ 0;
+    
+    behavior yes:
+      assumes x % y ≡ 0;
+      ensures \result ≡ 1;
+    
+    behavior no:
+      assumes x % y ≢ 0;
+      ensures \result ≡ 1;
+ */
+int __gen_e_acsl_is_dividable(int x, int y)
+{
+  __e_acsl_contract_t *__gen_e_acsl_contract;
+  int __retres;
+  {
+    __gen_e_acsl_contract = __e_acsl_contract_init(2UL);
+    __e_acsl_assert_data_t __gen_e_acsl_assert_data = {.values = (void *)0};
+    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data,"y",0,y);
+    __gen_e_acsl_assert_data.blocking = 1;
+    __gen_e_acsl_assert_data.kind = "Precondition";
+    __gen_e_acsl_assert_data.pred_txt = "y \342\211\242 0";
+    __gen_e_acsl_assert_data.file = "E-ACSL-examples/owi eacsl examples/integer_dividable.c";
+    __gen_e_acsl_assert_data.fct = "is_dividable";
+    __gen_e_acsl_assert_data.line = 3;
+    __e_acsl_assert(y != 0,& __gen_e_acsl_assert_data);
+    __e_acsl_assert_clean(& __gen_e_acsl_assert_data);
+    __e_acsl_assert_data_t __gen_e_acsl_assert_data_2 =
+      {.values = (void *)0};
+    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data_2,"y",0,y);
+    __gen_e_acsl_assert_data_2.blocking = 1;
+    __gen_e_acsl_assert_data_2.kind = "RTE";
+    __gen_e_acsl_assert_data_2.pred_txt = "y \342\211\242 0";
+    __gen_e_acsl_assert_data_2.file = "E-ACSL-examples/owi eacsl examples/integer_dividable.c";
+    __gen_e_acsl_assert_data_2.fct = "is_dividable";
+    __gen_e_acsl_assert_data_2.line = 5;
+    __gen_e_acsl_assert_data_2.name = "division_by_zero";
+    __e_acsl_assert(y != 0,& __gen_e_acsl_assert_data_2);
+    __e_acsl_assert_clean(& __gen_e_acsl_assert_data_2);
+    __e_acsl_contract_set_behavior_assumes(__gen_e_acsl_contract,0UL,
+                                           x % y == 0);
+    __e_acsl_assert_data_t __gen_e_acsl_assert_data_3 =
+      {.values = (void *)0};
+    __e_acsl_assert_register_int(& __gen_e_acsl_assert_data_3,"y",0,y);
+    __gen_e_acsl_assert_data_3.blocking = 1;
+    __gen_e_acsl_assert_data_3.kind = "RTE";
+    __gen_e_acsl_assert_data_3.pred_txt = "y \342\211\242 0";
+    __gen_e_acsl_assert_data_3.file = "E-ACSL-examples/owi eacsl examples/integer_dividable.c";
+    __gen_e_acsl_assert_data_3.fct = "is_dividable";
+    __gen_e_acsl_assert_data_3.line = 8;
+    __gen_e_acsl_assert_data_3.name = "division_by_zero";
+    __e_acsl_assert(y != 0,& __gen_e_acsl_assert_data_3);
+    __e_acsl_assert_clean(& __gen_e_acsl_assert_data_3);
+    __e_acsl_contract_set_behavior_assumes(__gen_e_acsl_contract,1UL,
+                                           x % y != 0);
+  }
+  __retres = is_dividable(x,y);
+  {
+    int __gen_e_acsl_assumes_value;
+    __gen_e_acsl_assumes_value = __e_acsl_contract_get_behavior_assumes
+    ((__e_acsl_contract_t const *)__gen_e_acsl_contract,0UL);
+    if (__gen_e_acsl_assumes_value) {
+      __e_acsl_assert_data_t __gen_e_acsl_assert_data_4 =
+        {.values = (void *)0};
+      __e_acsl_assert_register_int(& __gen_e_acsl_assert_data_4,"\\result",0,
+                                   __retres);
+      __gen_e_acsl_assert_data_4.blocking = 1;
+      __gen_e_acsl_assert_data_4.kind = "Postcondition";
+      __gen_e_acsl_assert_data_4.pred_txt = "\\result \342\211\241 1";
+      __gen_e_acsl_assert_data_4.file = "E-ACSL-examples/owi eacsl examples/integer_dividable.c";
+      __gen_e_acsl_assert_data_4.fct = "is_dividable";
+      __gen_e_acsl_assert_data_4.line = 6;
+      __gen_e_acsl_assert_data_4.name = "yes";
+      __e_acsl_assert(__retres == 1,& __gen_e_acsl_assert_data_4);
+      __e_acsl_assert_clean(& __gen_e_acsl_assert_data_4);
+    }
+    __gen_e_acsl_assumes_value = __e_acsl_contract_get_behavior_assumes
+    ((__e_acsl_contract_t const *)__gen_e_acsl_contract,1UL);
+    if (__gen_e_acsl_assumes_value) {
+      __e_acsl_assert_data_t __gen_e_acsl_assert_data_5 =
+        {.values = (void *)0};
+      __e_acsl_assert_register_int(& __gen_e_acsl_assert_data_5,"\\result",0,
+                                   __retres);
+      __gen_e_acsl_assert_data_5.blocking = 1;
+      __gen_e_acsl_assert_data_5.kind = "Postcondition";
+      __gen_e_acsl_assert_data_5.pred_txt = "\\result \342\211\241 1";
+      __gen_e_acsl_assert_data_5.file = "E-ACSL-examples/owi eacsl examples/integer_dividable.c";
+      __gen_e_acsl_assert_data_5.fct = "is_dividable";
+      __gen_e_acsl_assert_data_5.line = 9;
+      __gen_e_acsl_assert_data_5.name = "no";
+      __e_acsl_assert(__retres == 1,& __gen_e_acsl_assert_data_5);
+      __e_acsl_assert_clean(& __gen_e_acsl_assert_data_5);
+    }
+    __e_acsl_contract_clean(__gen_e_acsl_contract);
+    return __retres;
+  }
 }
 
 
