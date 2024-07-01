@@ -1,5 +1,9 @@
+// #include <stdlib.h>
+
 int main(void) {
     int* p, x;
-    x = *p;
-    return 0;
+    p = (int*)malloc(sizeof(int));
+    // free(p);
+    x = *p + 1;
+    return x + 1;
 }

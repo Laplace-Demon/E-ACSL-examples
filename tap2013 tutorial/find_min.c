@@ -23,3 +23,7 @@ int find_min(int* a, int length) {
     }
     return min_idx;
 }
+
+int main(void) {
+    
+}

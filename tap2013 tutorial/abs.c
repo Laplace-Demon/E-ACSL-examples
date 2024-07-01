@@ -5,6 +5,11 @@
     assigns \nothing;
 */
 int abs(int x) {
+    //@ ghost int y = 0;
     if (x >= 0) return x;
     return -x;
+}
+
+int main() {
+    return 0;
 }

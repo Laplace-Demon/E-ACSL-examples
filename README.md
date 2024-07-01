@@ -71,3 +71,15 @@ mathematical integers:
 other problems:
 	numbers: int, long, __e_acsl_mpz_t integer
 	memory models: \separated, \base_addr, \block_length, \offset, \freeable predicate
+
+---
+01/07
+Normal ghost constructs:
+	ghost code integrates just with normal C code in the instrumented program, trivial use cases include: (global) ghost variable, ghost statement, ghost else clause, ghost default clause, ghost case clause (however the use of break is not controlled, which may potentially break the non-interference rule), ghost label (the state of symbol does not fit well with data-ats)
+
+Ghost function and ghost parameters:
+	calling a non-ghost function from ghost code is by default forbidden in Frama-C as side-effect analysis is hard. Must write duplicate ghost functions, or pass `-kernel-warn-key ghost:bad-use=inactive` to enable this.
+	ghost parameters become explicit in instrumented code, so every non-ghost call must provide a ghost argument
+
+Ghost structure and ghost field:
+	ghost structure definition is supported, however, for ghost struct fields, it is not support by E-ACSL currently. We either simply define the whole struct as ghost or as regular.

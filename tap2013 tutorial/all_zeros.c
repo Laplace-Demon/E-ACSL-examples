@@ -1,3 +1,5 @@
+#include <owi.h>
+
 /*@ requires n >= 0 && \valid(t + (0 .. n - 1));
     assigns  \nothing;
     ensures  \result != 0 <==>
@@ -13,4 +15,14 @@ int all_zeros(int t[], int n) {
         if (t[k] != 0)
             return 0;
     return 1;
+}
+
+int main(void) {
+    int* t;
+    int n;
+    n = 10;
+    t = (int*)malloc(n * sizeof(int));
+    for (int i = 0; i < n; ++i) t[i] = owi_i32();
+    all_zeros(t, n);
+    return 0;
 }
