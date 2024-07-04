@@ -83,3 +83,7 @@ Ghost function and ghost parameters:
 
 Ghost structure and ghost field:
 	ghost structure definition is supported, however, for ghost struct fields, it is not support by E-ACSL currently. We either simply define the whole struct as ghost or as regular.
+
+02/07
+Abrupt termination:
+	not supported (breaks, continues, returns, exits)

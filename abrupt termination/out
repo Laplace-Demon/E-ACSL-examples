@@ -1,0 +1,17 @@
+[kernel] computing the AST
+[kernel] parsing
+[kernel] Parsing stmt.c (with preprocessing)
+[kernel] Parsing /tmp/stmt.c647664.ia1fa7c.pp to Cabs
+[kernel] Parsing /tmp/stmt.c647664.ia1fa7c.pp
+[kernel] Converting /tmp/stmt.c647664.ia1fa7c.pp from Cabs to CIL
+[kernel] stmt.c:8: Warning: 
+  Pre is a builtin ACSL label, this C label is hidden in annotations
+[kernel:annot-error] stmt.c:11: Warning: 
+  unbound logic variable x. Ignoring code annotation
+[kernel] User Error: warning annot-error treated as fatal error.
+[kernel] Frama-C aborted: invalid user input.
+run ['/home/laplace_demon/.opam/5.2.0+flambda/bin/frama-c' '-e-acsl'
+     '-no-frama-c-stdlib' '-kernel-warn-key' 'CERT:MSC:38=inactive'
+     '-verbose' '2'
+     '-cpp-extra-args="-I/home/laplace_demon/.opam/5.2.0+flambda/share/owi/libc"'
+     'stmt.c' '-then-last' '-print' '-ocode' 'stmt_instrumented.c']: exited with 1
