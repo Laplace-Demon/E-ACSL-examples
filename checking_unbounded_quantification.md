@@ -2,7 +2,7 @@
 
 To perform runtime assertion checking, quantifications in specification must be bounded in order to be executable. With symbolic execution, we can lift this restriction by introducing symbol for quantifier. For example:
 
-```
+```wast
 (; forall x, P(x) ;)
 
 (func (local $x i32)
