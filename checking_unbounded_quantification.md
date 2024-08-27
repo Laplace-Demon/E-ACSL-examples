@@ -18,7 +18,7 @@ There, the value produced by `[[ P(x) ]]` encodes the truth value of the proposi
 Existentials and nested quantifications bring more complication, as they cannot be expressed by assertions in a single program state. Thus, we plan to add the following functions for symbolic execution:
 
 - `model_exists(var, prop)` which returns a boolean, indicating whether the proposition `prop` holds true for one possible value of `var`.
-- `assert(var, prop)` which returns a boolean, indicating whether the proposition `prop` holds true for all possible values of `var`.
+- `model_forall(var, prop)` which returns a boolean, indicating whether the proposition `prop` holds true for all possible values of `var`.
 
 The procedure for checking quantifications could be:
 
