@@ -9,7 +9,7 @@ To perform runtime assertion checking, quantifications in specification must be 
     call $i32_symbol
     local.set $x
     [[ P(x) ]]
-    call $assert
+    call $owi_assert
 )
 ```
 
@@ -26,4 +26,4 @@ The procedure for checking quantifications could be:
 - Bind all the quantifiers to symbols of their type. (`i32`, `i64`, `f32` and `f64`)
 - Calculate the inner quantifier-free proposition.
 - Iterate on the quantifiers using the two functions.
-- Call `assert` on the result.
+- Call `owi_assert` on the result.
